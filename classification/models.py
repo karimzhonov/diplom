@@ -48,9 +48,7 @@ class Model:
         self.model.save(self.model_name)
 
     def test(self):
-        (x_train, _), (x_test, y_test) = self.load_dataset()
-        for i, point in enumerate(x_train[0: 10]):
-            plt.imsave(f'./assets/primer/{i}.png', point)
+        _, (x_test, y_test) = self.load_dataset()
         predict = self.model.predict(x_test)
 
         false_answers_counter = 0
