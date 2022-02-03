@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="row title">All Cameras</div>
+<div class="row">
+    {% for lock in locks %}
+        <div class="col-3 frame">
+            <img class='img' src="/tmp/{{lock.port}}/frame.png" alt="frame">
+        </div>
+    {% endfor %}
+</div>  
+{% endblock main %}
