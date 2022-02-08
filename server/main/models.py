@@ -139,7 +139,6 @@ class Lock(models.Model):
             return d * dis_eyes / settings.EYES_DISTACE_DEFAULT
         status = 0
         try:
-        
             h, w, _ = frame.shape
             coordinates = []
 
@@ -184,7 +183,7 @@ class Lock(models.Model):
         return status
 
     @classmethod
-    def run_frames(cls, session, conn, port) -> None:
+    def run_frames(cls, session, conn, port, show: bool=True) -> None:
         while True:
             try:
                 if not session.status:
@@ -194,10 +193,11 @@ class Lock(models.Model):
 
                 cls.save_frame(port, frame)
 
-                cv2.imshow(f'{port}', frame)
-                if cv2.waitKey(1) == ord('q'):
-                    session.status = False
-                    break
+                if show:
+                    cv2.imshow(f'{port}', frame)
+                    if cv2.waitKey(1) == ord('q'):
+                        session.status = False
+                        break
 
                 answer = pickle.dumps(b'ok')
                 conn.send(answer)
@@ -213,7 +213,8 @@ class Lock(models.Model):
                 if not session.status:
                     break
                 question = self.conn.recv(4096)
-                 
+                if not os.path.exists(self.frame_path):
+                    continue
                 frame = cv2.imread(self.frame_path, cv2.IMREAD_ANYCOLOR)
                 answer = self.auth(frame)
                 answer = pickle.dumps(answer)

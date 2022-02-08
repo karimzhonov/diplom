@@ -29,7 +29,7 @@ class Session:
     def run_frames(self) -> None:
         s = get_server_socket(self.port_frame)
         connection, address = s.accept()
-        Lock.run_frames(self, connection, self.port)
+        Lock.run_frames(self, connection, self.port, show=True)
 
     def run(self) -> None:
         Thread(target=self.run_frames).start()

@@ -8,7 +8,7 @@ from lock_control import Control
 
 HOST = "localhost"
 PORT = 5000
-LOCK_PORT = 5001
+LOCK_PORT = 5005
 
 
 def get_client_socket(port_clent: int, port_server: int) -> socket.socket:
@@ -16,7 +16,6 @@ def get_client_socket(port_clent: int, port_server: int) -> socket.socket:
     s.bind((HOST, port_clent))
     s.connect((HOST, port_server))
     return s
-
 
 
 class Client:
@@ -47,13 +46,11 @@ class Client:
         
 
     def run_frame_socket(self) -> None:
-        video = cv2.VideoCapture(0)
+        video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         s = get_client_socket(self.port_frame, self.port_server_frame)
 
         while True:
             self.send_frame(s, video)
-            if not self.status:
-                break
             answer = s.recv(4096)
     
     def run_auth_socket(self) -> None:
@@ -63,8 +60,6 @@ class Client:
         while True:
             try:
                 s.send(b'Get')
-                if not self.status:
-                    break
                 answer = s.recv(4096)
                 answer = pickle.loads(answer)
                 lock_controller.control(bool(int(answer)))
