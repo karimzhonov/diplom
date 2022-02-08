@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
-from main.server_socket import main as socket_start
+from main.server_socket import MultiSocket
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        socket_start()
+        MultiSocket().run()
