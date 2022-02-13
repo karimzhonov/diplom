@@ -105,6 +105,18 @@ class Lock(models.Model):
         lock.frame_path = f'{lock.dir_path}/frame.png'
         return lock
 
+    @classmethod
+    def get_last_frame_path_list(clc):
+        locks = clc.objects.all()
+        path_list = []
+        for lock in locks:
+            path = lock.get_last_frame_path()
+            path_list.append(path)
+        return path_list
+
+    def get_last_frame_path(self):
+        return f'{settings.BASE_DIR}/tmp/{self.port}/frame.png'
+
     def get_frame(conn) -> np.array:
         data = []
         while True:
@@ -124,6 +136,7 @@ class Lock(models.Model):
             os.mkdir(dir_path)
 
         cv2.imwrite(frame_path, frame)
+    
 
     @staticmethod
     def check_distance(frame: np.array) -> int:
@@ -183,7 +196,7 @@ class Lock(models.Model):
         return status
 
     @classmethod
-    def run_frames(cls, session, conn, port, show: bool=True) -> None:
+    def run_frames(cls, session, conn, port, show: bool=False) -> None:
         while True:
             try:
                 if not session.status:
@@ -191,7 +204,7 @@ class Lock(models.Model):
 
                 frame = cls.get_frame(conn)
 
-                cls.save_frame(port, frame)
+                Thread(target=cls.save_frame, args=(port, frame)).start()
 
                 if show:
                     cv2.imshow(f'{port}', frame)

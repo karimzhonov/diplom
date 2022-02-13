@@ -8,7 +8,7 @@ from lock_control import Control
 
 HOST = "localhost"
 PORT = 5000
-LOCK_PORT = 5005
+LOCK_PORT = 5001
 
 
 def get_client_socket(port_clent: int, port_server: int) -> socket.socket:

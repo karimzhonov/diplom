@@ -29,7 +29,7 @@ class Session:
     def run_frames(self) -> None:
         s = get_server_socket(self.port_frame)
         connection, address = s.accept()
-        Lock.run_frames(self, connection, self.port, show=True)
+        Lock.run_frames(self, connection, self.port)
 
     def run(self) -> None:
         Thread(target=self.run_frames).start()
@@ -47,8 +47,4 @@ class MultiSocket:
             print('Client connected: ', address)
             host, port = address
             Session(port).run()
-
-
-if __name__ == '__main__':
-    MultiSocket().run()
     

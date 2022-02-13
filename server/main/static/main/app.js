@@ -3,12 +3,9 @@ function get_frames(){
 
     frames.forEach(point => {
         img = point.querySelector('.img')
-        new_img = `<img class='img' src="${img.src}" alt="frame">`
-        point.innerHTML = new_img
+        new_img = `<img class='img' src="${img.src}" alt="">`
+        point.insertAdjacentHTML('beforeend', new_img)
     }) 
 }
 
-while (true){
-    setTimeout(get_frames, 0.5)
-}
-
+setInterval(() => get_frames(), 2000)
