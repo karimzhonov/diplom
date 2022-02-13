@@ -5,4 +5,7 @@ from main.server_socket import MultiSocket
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        MultiSocket().run()
+        try:
+            MultiSocket().run()
+        except OSError:
+            pass

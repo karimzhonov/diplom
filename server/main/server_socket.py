@@ -23,13 +23,14 @@ class Session:
     def run_auth(self) -> None:
         s = get_server_socket(self.port_auth)
         connection, address = s.accept()
-        lock = Lock.init(self.port, connection)
-        lock.run_auth(self)
+        lock = Lock.init(self.port)
+        lock.run_auth(self, connection)
 
     def run_frames(self) -> None:
         s = get_server_socket(self.port_frame)
         connection, address = s.accept()
-        Lock.run_frames(self, connection, self.port)
+        lock = Lock.init(self.port)
+        lock.run_frames(self, connection)
 
     def run(self) -> None:
         Thread(target=self.run_frames).start()

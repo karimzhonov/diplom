@@ -2,6 +2,7 @@ import sys
 import pygame
 
 from main.models import Lock
+from django.conf import settings
 
 
 class App:

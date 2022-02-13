@@ -94,29 +94,18 @@ class Lock(models.Model):
         return f'{self.port}'
 
     @classmethod
-    def init(cls, port, conn):
+    def init(cls, port):
         locks = cls.objects.filter(port=port)
         if not len(locks):
             lock = cls.objects.create(port=port, permission_id=1)
         else:
             lock = locks[0]
-        lock.conn = conn
-        lock.dir_path = f'{settings.BASE_DIR}/tmp/{port}'
-        lock.frame_path = f'{lock.dir_path}/frame.png'
         return lock
 
-    @classmethod
-    def get_last_frame_path_list(clc):
-        locks = clc.objects.all()
-        path_list = []
-        for lock in locks:
-            path = lock.get_last_frame_path()
-            path_list.append(path)
-        return path_list
-
     def get_last_frame_path(self):
-        return f'{settings.BASE_DIR}/tmp/{self.port}/frame.png'
-
+        return f'{settings.BASE_DIR}/tmp/{self.port}_frame.png'
+    
+    @staticmethod
     def get_frame(conn) -> np.array:
         data = []
         while True:
@@ -128,13 +117,9 @@ class Lock(models.Model):
             conn.send(b'ok')
         return np.array(data)
 
-    @staticmethod
-    def save_frame(port, frame) -> None:
-        dir_path = f'{settings.BASE_DIR}/tmp/{port}'
-        frame_path = f'{dir_path}/frame.png'
-        if not os.path.exists(dir_path):
-            os.mkdir(dir_path)
-
+    def save_frame(self, frame) -> None:
+        frame_path = self.get_last_frame_path()
+        
         cv2.imwrite(frame_path, frame)
     
 
@@ -195,19 +180,20 @@ class Lock(models.Model):
 
         return status
 
-    @classmethod
-    def run_frames(cls, session, conn, port, show: bool=False) -> None:
+    
+    def run_frames(self, session, conn, show: bool=False) -> None:
+
         while True:
             try:
                 if not session.status:
                     break
+                
+                frame = self.get_frame(conn)
 
-                frame = cls.get_frame(conn)
-
-                Thread(target=cls.save_frame, args=(port, frame)).start()
+                Thread(target=self.save_frame, args=(frame,)).start()
 
                 if show:
-                    cv2.imshow(f'{port}', frame)
+                    cv2.imshow(f'{self.port}', frame)
                     if cv2.waitKey(1) == ord('q'):
                         session.status = False
                         break
@@ -220,24 +206,26 @@ class Lock(models.Model):
                 break
         conn.close() 
 
-    def run_auth(self, session) -> None:
+    def run_auth(self, session, conn) -> None:
         while True:
             try:
                 if not session.status:
                     break
-                question = self.conn.recv(4096)
-                if not os.path.exists(self.frame_path):
+                
+                question = conn.recv(4096)
+                if not os.path.exists(self.get_last_frame_path()):
                     continue
-                frame = cv2.imread(self.frame_path, cv2.IMREAD_ANYCOLOR)
+                frame = cv2.imread(self.get_last_frame_path(), cv2.IMREAD_ANYCOLOR)
                 answer = self.auth(frame)
                 answer = pickle.dumps(answer)
-                self.conn.send(answer)
+                conn.send(answer)
             except cv2.error:
                 continue
             except ConnectionResetError:
                 break
             except EOFError:
                 break
+        conn.close()
 
 
 class Activity(models.Model):

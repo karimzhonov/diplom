@@ -1,3 +1,4 @@
+import sys
 import socket
 import cv2
 import pickle
@@ -39,9 +40,10 @@ class Client:
             self.status = False
 
     def run(self) -> None:
-        get_client_socket(LOCK_PORT, PORT)
+        get_client_socket(self.port, PORT)
         sleep(0.5)
         Thread(target=self.run_frame_socket).start()
+        sleep(3)
         Thread(target=self.run_auth_socket).start()
         
 
@@ -67,5 +69,11 @@ class Client:
                 break
 
 if __name__ == '__main__':
-    Client(LOCK_PORT).run()
+    try:
+        port = int(sys.argv[1])
+    except IndexError:
+        port = LOCK_PORT
+    except ValueError:
+        raise ValueError('port must be integer')
+    Client(port).run()
     
