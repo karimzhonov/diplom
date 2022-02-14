@@ -8,6 +8,7 @@ from threading import Thread
 from socket import socket
 from server import settings
 from .models import Lock, Activity, Profile
+from .multi_socket import MultiSocket
 
 
 class Client:
@@ -19,18 +20,19 @@ class Client:
         pass
 
     def run(self, session):
-        from app.main import RUNNING
-
         while True:
             try:
                 if not session.status:
+                    self.conn.close()
                     break
-                if not RUNNING:
+                if not MultiSocket.get_status():
+                    self.conn.close()
                     break
                 self.main()
             except cv2.error:
                 continue
             except ConnectionResetError:
+                self.conn.close()
                 break
             except EOFError:
                 break

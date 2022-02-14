@@ -1,7 +1,9 @@
+import pickle
 import socket
 from threading import Thread
+
+from server.settings import BASE_DIR
 from .models import Lock
-from .data_transfer import Authentication, Frame
 
 
 HOST = 'localhost'
@@ -22,18 +24,22 @@ class Session:
         self.status = True
 
     def run_auth(self) -> None:
+        from .data_transfer import Authentication
         s = get_server_socket(self.port_auth)
         connection, address = s.accept()
         lock = Lock.init(self.port)
         auth = Authentication(lock, connection)
         auth.run(self)
+        s.close()
 
     def run_frames(self) -> None:
+        from .data_transfer import Frame
         s = get_server_socket(self.port_frame)
         connection, address = s.accept()
         lock = Lock.init(self.port)
         frame = Frame(lock, connection)
         frame.run(self)
+        s.close()
 
     def run(self) -> None:
         Thread(target=self.run_frames).start()
@@ -41,15 +47,29 @@ class Session:
 
 
 class MultiSocket:
-    PORT = 5000    
-    
+    PORT = 5000
+    filename = f'{BASE_DIR}/tmp/start.pickle'
+
+    @classmethod
+    def get_status(cls):
+        with open(cls.filename, 'rb') as file:
+            return pickle.load(file)
+
+    @classmethod
+    def set_status(cls, status: bool):
+        with open(cls.filename, 'wb') as file:
+            pickle.dump(status, file)
+
     def run(self) -> None:
         s = get_server_socket(self.PORT)
         print('Server started')
         while True:
             connection, address = s.accept()
+            if not self.get_status():
+                connection.close()
+                s.close()
+                break
             print('Client connected: ', address)
             host, port = address
             ses = Session(port)
             Thread(target=ses.run).start()
-    

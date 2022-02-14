@@ -2,8 +2,7 @@ import sys
 import pygame
 
 from main.models import Lock
-
-RUNNING = True
+from main.multi_socket import MultiSocket
 
 
 class App:
@@ -25,15 +24,14 @@ class App:
 
     @staticmethod
     def quit_event():
-        global RUNNING
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                RUNNING = False
+                MultiSocket.set_status(False)
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    RUNNING = False
+                    MultiSocket.set_status(False)
                     pygame.quit()
                     sys.exit()
 
