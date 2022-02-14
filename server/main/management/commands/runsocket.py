@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from main.server_socket import MultiSocket
+from main.multi_socket import MultiSocket
 
 
 class Command(BaseCommand):

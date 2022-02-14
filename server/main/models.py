@@ -1,50 +1,44 @@
-import os
-import cv2
-import pickle
-import numpy as np
 import face_recognition as fr
 from datetime import datetime
-
-from threading import Thread
 from django.db import models
-from django.conf import settings
+from server import settings
 
 
 class Permission(models.Model):
-    name = models.CharField(max_length=255)
-    bio = models.TextField(blank=True)
+    name = models.CharField(max_length=255, verbose_name='Название')
+    bio = models.TextField(blank=True, verbose_name='Описание')
 
     class Meta:
-        pass
+        verbose_name = 'Разрешение'
+        verbose_name_plural = 'Разрешении'
+        ordering = ['pk']
 
     def __str__(self) -> str:
         return f'{self.name}'
 
-    @staticmethod
-    def check_permission(profiles, lock) -> int:
-        status = 0
-
-        for profile in profiles:
-            for per in profile.permissions.all():
-                if per.pk == lock.permission.pk:
-                    status = 1
-
-        return status
-
 
 class Profile(models.Model):
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    bio = models.TextField(blank=True)
-    img = models.ImageField(upload_to='profiles/', blank=True)
-    permissions = models.ManyToManyField(Permission)
-    is_active = models.BooleanField(default=True)
+    first_name = models.CharField(max_length=255, verbose_name='Имя')
+    last_name = models.CharField(max_length=255, verbose_name='Фамилия')
+    bio = models.TextField(blank=True, verbose_name='Дополнительные данные')
+    img = models.ImageField(upload_to='profiles/', blank=True, verbose_name='Фото')
+    permissions = models.ManyToManyField(Permission, verbose_name='Разрешено')
+    is_active = models.BooleanField(default=True, verbose_name='Астивный пользователь')
 
     class Meta:
-        pass
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ['is_active', 'pk']
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
+
+    def check_permissions(self, lock):
+        status = 0
+        for per in self.permissions.all():
+            if per.pk == lock.permission.pk:
+                status = 1
+        return status
 
     @classmethod
     def get_profiles_encs(cls) -> tuple:
@@ -59,36 +53,16 @@ class Profile(models.Model):
             profiles_list.append(point)
         return data, profiles_list
 
-    @classmethod
-    def compare_face(cls, frame: np.array) -> tuple:
-        status = 0
-        profile = []
-        true_face_encs, profiles = cls.get_profiles_encs()
-
-        frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        face_locs = fr.face_locations(frame)
-        face_encs = fr.face_encodings(frame, face_locs)
-
-        for enc in face_encs:
-            flags = fr.compare_faces(true_face_encs, enc)
-
-            for i, flag in enumerate(flags):
-                if flag:
-                    status = 1
-                    profile.append(profiles[i])
-        
-        return status, profile
-
 
 class Lock(models.Model):
-    port = models.IntegerField()
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, blank=True)
-    bio = models.TextField(blank=True)
+    port = models.IntegerField(verbose_name='Порт соединение', unique=True)
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, blank=True, verbose_name='Разрешено')
+    bio = models.TextField(blank=True, verbose_name='Дополнительные данные')
 
     class Meta:
-        pass
+        verbose_name = 'Замок'
+        verbose_name_plural = 'Замки'
+        ordering = ['port']
 
     def __str__(self) -> str:
         return f'{self.port}'
@@ -104,143 +78,24 @@ class Lock(models.Model):
 
     def get_last_frame_path(self):
         return f'{settings.BASE_DIR}/tmp/{self.port}_frame.png'
-    
-    @staticmethod
-    def get_frame(conn) -> np.array:
-        data = []
-        while True:
-            answer = conn.recv(4096)
-            if answer == b'stop':
-                break
-            answer = pickle.loads(answer)
-            data.append(answer)
-            conn.send(b'ok')
-        return np.array(data)
-
-    def save_frame(self, frame) -> None:
-        frame_path = self.get_last_frame_path()
-        
-        cv2.imwrite(frame_path, frame)
-    
-
-    @staticmethod
-    def check_distance(frame: np.array) -> int:
-        from mediapipe.python.solutions.face_mesh import FaceMesh
-        
-        def get_pifagure(lx, ly, rx, ry):
-            return ((lx-rx)**2 + (ly-ry)**2)**(1/2)
-
-        def get_distance(dis_eyes):
-            return settings.FOCAL_DEFAULT * settings.EYES_DISTACE_DEFAULT / dis_eyes
-
-        def get_focal(dis_eyes: float, d: float):
-            return d * dis_eyes / settings.EYES_DISTACE_DEFAULT
-        status = 0
-        try:
-            h, w, _ = frame.shape
-            coordinates = []
-
-            detector = FaceMesh(max_num_faces=10)
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            landmarks = detector.process(frame_rgb).multi_face_landmarks
-            if landmarks:
-                for point in landmarks:
-                    left_eye = point.landmark[23]
-                    right_eye = point.landmark[253]
-                    lx, ly = int(left_eye.x * w), int(left_eye.y * h)
-                    rx, ry = int(right_eye.x * w), int(right_eye.y * h)
-                    coordinates.append(((lx, ly), (rx, ry)))
-            if coordinates:
-                left, right = coordinates[0]
-                min_dis_eyes = get_pifagure(*left, *right)
-                for (lx, ly), (rx, ry) in coordinates:
-                    dis = get_pifagure(lx, ly, rx, ry)
-                    if min_dis_eyes > dis:
-                        min_dis_eyes = dis
-                
-                distance_to_camera = get_distance(min_dis_eyes)
-                if distance_to_camera < settings.MAX_AUTH_DISTANCE:
-                    status = 1
-        except AttributeError:
-            pass
-        return status  
-
-    def auth(self, frame: np.array) -> int:
-        profiles = None
-        status = self.check_distance(frame)
-
-        if status:
-            status, profiles = Profile.compare_face(frame)
-
-        if status:
-            status = Permission.check_permission(profiles, self)
-  
-        if status:
-            Thread(target=Activity.add_activity, args=(profiles, self)).start()
-
-        return status
-
-    
-    def run_frames(self, session, conn, show: bool=False) -> None:
-
-        while True:
-            try:
-                if not session.status:
-                    break
-                
-                frame = self.get_frame(conn)
-
-                Thread(target=self.save_frame, args=(frame,)).start()
-
-                if show:
-                    cv2.imshow(f'{self.port}', frame)
-                    if cv2.waitKey(1) == ord('q'):
-                        session.status = False
-                        break
-
-                answer = pickle.dumps(b'ok')
-                conn.send(answer)
-            except ConnectionResetError:
-                break
-            except EOFError:
-                break
-        conn.close() 
-
-    def run_auth(self, session, conn) -> None:
-        while True:
-            try:
-                if not session.status:
-                    break
-                
-                question = conn.recv(4096)
-                if not os.path.exists(self.get_last_frame_path()):
-                    continue
-                frame = cv2.imread(self.get_last_frame_path(), cv2.IMREAD_ANYCOLOR)
-                answer = self.auth(frame)
-                answer = pickle.dumps(answer)
-                conn.send(answer)
-            except cv2.error:
-                continue
-            except ConnectionResetError:
-                break
-            except EOFError:
-                break
-        conn.close()
 
 
 class Activity(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    lock = models.ForeignKey(Lock, on_delete=models.CASCADE)
-    date_time = models.DateTimeField(auto_now=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    lock = models.ForeignKey(Lock, on_delete=models.CASCADE, verbose_name='Замок')
+    date_time = models.DateTimeField(auto_now=True, verbose_name='Дата и время')
 
     class Meta:
-        pass
+        verbose_name = 'Активность'
+        verbose_name_plural = 'Активности'
+        ordering = ['-date_time']
 
     def __str__(self) -> str:
         return f'{self.profile}'
 
     def as_console(self) -> None:
-        print(f'[INFO] Person: {self.profile}, Lock: {self.lock}. Date: {self.date_time.date()}, Time: {self.date_time.time()}')
+        print(f'[INFO] Person: {self.profile}, Lock: {self.lock}. '
+              f'Date: {self.date_time.date()}, Time: {self.date_time.time()}')
 
     @classmethod
     def add_activity(cls, profiles: list[Profile], lock: Lock) -> None:
@@ -257,4 +112,3 @@ class Activity(models.Model):
                 delta = a - b
                 if delta.total_seconds() > settings.NOT_AUTHING_TIME:
                     cls.objects.create(profile_id=profile.pk, lock_id=lock.pk).as_console()
-

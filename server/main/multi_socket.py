@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
 from .models import Lock
+from .data_transfer import Authentication, Frame
 
 
 HOST = 'localhost'
@@ -24,13 +25,15 @@ class Session:
         s = get_server_socket(self.port_auth)
         connection, address = s.accept()
         lock = Lock.init(self.port)
-        lock.run_auth(self, connection)
+        auth = Authentication(lock, connection)
+        auth.run(self)
 
     def run_frames(self) -> None:
         s = get_server_socket(self.port_frame)
         connection, address = s.accept()
         lock = Lock.init(self.port)
-        lock.run_frames(self, connection)
+        frame = Frame(lock, connection)
+        frame.run(self)
 
     def run(self) -> None:
         Thread(target=self.run_frames).start()
@@ -47,5 +50,6 @@ class MultiSocket:
             connection, address = s.accept()
             print('Client connected: ', address)
             host, port = address
-            Session(port).run()
+            ses = Session(port)
+            Thread(target=ses.run).start()
     

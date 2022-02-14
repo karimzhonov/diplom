@@ -2,11 +2,13 @@ import sys
 import pygame
 
 from main.models import Lock
-from django.conf import settings
+
+RUNNING = True
 
 
 class App:
-    def __init__(self, title: str = 'Camera surveillance', display_shape=(1000, 600), frame_shape=(200, 150), background_color=(0, 0, 0), color=(255, 255, 255)):
+    def __init__(self, title: str = 'Camera surveillance', display_shape=(1000, 600), frame_shape=(200, 150),
+                 background_color=(0, 0, 0), color=(255, 255, 255)):
         self.dwidth, self.dheight = display_shape
         self.fwidth, self.fheight = frame_shape
         self.background_color = background_color
@@ -23,12 +25,15 @@ class App:
 
     @staticmethod
     def quit_event():
+        global RUNNING
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                RUNNING = False
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    RUNNING = False
                     pygame.quit()
                     sys.exit()
 
@@ -37,10 +42,9 @@ class App:
         img = pygame.transform.scale(img, (self.fwidth, self.fheight))
         self.screen.blit(img, x_y)
 
-
     def set_lock_text(self, lock: Lock, x_y: tuple):
         x, y = x_y
-        text = self.font.render(lock.__str__(), False, self.color)  
+        text = self.font.render(lock.__str__(), False, self.color)
         self.screen.blit(text, (x + 10, y + self.fheight + 10))
 
     def run(self):
@@ -51,11 +55,10 @@ class App:
                 counter = 0
                 for lock in Lock.objects.all().order_by('port'):
                     counter += 1
-                    
+
                     self.set_lock_frame(lock, (x, y))
 
                     self.set_lock_text(lock, (x, y))
-                    
 
                     if counter % self.col_count == 0:
                         y += self.fwidth
@@ -64,7 +67,7 @@ class App:
                         x += self.fwidth
                     if counter > self.col_count * self.row_count:
                         continue
-                    
+
                 pygame.display.flip()
                 self.quit_event()
             except FileNotFoundError:
