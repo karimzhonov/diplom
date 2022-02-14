@@ -38,22 +38,43 @@ class Client:
             s.send(b'stop')
         except ConnectionAbortedError:
             self.status = False
+            s.close()
+        except ConnectionResetError:
+            self.status = False
+            s.close()
 
     def run(self) -> None:
-        get_client_socket(self.port, PORT)
-        sleep(0.5)
-        Thread(target=self.run_frame_socket).start()
-        sleep(3)
-        Thread(target=self.run_auth_socket).start()
-        
+        while True:
+            try:
+                sleep(1)
+                s = get_client_socket(self.port, PORT)
+                sleep(0.5)
+                task1 = Thread(target=self.run_frame_socket)
+                task1.start()
+                sleep(3)
+                task2 = Thread(target=self.run_auth_socket)
+                task2.start()
+                sleep(1)
+                task1.join()
+                task2.join()
+                s.close()
+            except OSError:
+                continue
 
     def run_frame_socket(self) -> None:
         video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         s = get_client_socket(self.port_frame, self.port_server_frame)
 
         while True:
-            self.send_frame(s, video)
-            answer = s.recv(4096)
+            try:
+                self.send_frame(s, video)
+                answer = s.recv(4096)
+            except ConnectionAbortedError:
+                s.close()
+                break
+            except OSError:
+                s.close
+                break
     
     def run_auth_socket(self) -> None:
         lock_controller = Control(is_door_locked=True)
@@ -66,6 +87,10 @@ class Client:
                 answer = pickle.loads(answer)
                 lock_controller.control(bool(int(answer)))
             except ConnectionAbortedError:
+                s.close()
+                break
+            except OSError:
+                s.close()
                 break
 
 if __name__ == '__main__':
