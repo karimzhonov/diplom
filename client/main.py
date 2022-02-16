@@ -8,7 +8,7 @@ from threading import Thread
 import pygame
 from config import *
 from app import App
-from utils import set_running_status , get_running_status
+from utils import set_running_status, get_running_status
 from lock_control import LockControl
 
 def get_client_socket(port_clent: int, port_server: int) -> socket.socket:
