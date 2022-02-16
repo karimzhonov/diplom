@@ -28,74 +28,57 @@ def get_running_status():
 
 
 class Led:
-    def __init__(self, radius: int = 10, true_color = (0, 255, 0), false_color = (255, 0, 0)) -> None:
-        self.radius = radius
-        self.true_color = true_color
-        self.false_color = false_color
-        pygame.init()
+    true_led_path = 'assets/led_on.png'
+    false_led_path = 'assets/led_off.png'
+    def __init__(self, raduis=18) -> None:
+        self.radius = raduis
 
-    def render(self, screen: pygame.Surface, x_y, answer: bool):
-        if answer:
-            color = self.true_color
+    def render(self, screen: pygame.Surface, x_y, status: bool):
+        if status:
+            path = self.true_led_path
         else:
-            color = self.false_color
+            path = self.false_led_path
         
-        pygame.draw.circle(screen, (255, 255, 255), x_y, self.radius)
-        pygame.draw.circle(screen, color, x_y, self.radius - 2)
-
+        img_surf = pygame.image.load(path)
+        img_surf = pygame.transform.scale(img_surf, (self.radius * 2, self.radius * 2))
+        x, y = x_y
+        x -= self.radius
+        y -= self.radius
+        screen.blit(img_surf, (x, y))
 
 class Toggle:
-    def __init__(self, scale = 1.2, true_color = (0, 255, 0), 
-    false_color = (255, 0, 0), color=(255, 255, 255), border_color=(0, 0, 0)) -> None:
+    true_toggle_path = 'assets/toggle_on.png'
+    false_toggle_path = 'assets/toggle_off.png'
+    def __init__(self, scale=0.4) -> None:
         self.scale = scale
-        self.true_color = true_color
-        self.false_color = false_color
-        self.color = color
-        self.border_color = border_color
-        
-        self.current_button_pos = None
-        self.is_checked = None 
-
-    def _set_coordinate_value(self, x_y: tuple[int, int]):
-        self.x, self.y = x_y
-        self.width, self.height = (40*self.scale, 20*self.scale) 
-        self.button_r = self.height / 2 - 2
-        self.button_left_x, self.button_left_y = (self.x + 2 + self.button_r, self.y + 2 + self.button_r)   
-        self.button_right_x, self.button_right_y = (self.x + self.width - 2 - self.button_r, self.y + 2 + self.button_r)  
+        self.is_checked = None
 
     def is_mouse_in_area(self, x, y):
-        cx, cy = self.current_button_pos
-        r = self.button_r
-        if cx - r <= x <= cx + r and cy - r <= y <= cy + r:
+        if self.x <= x <= self.x + self.iwidth and self.y <= y <= self.y + self.iheight:
             return True
         return False
 
     def on_click_event(self, event, set_func):
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            in_area = self.is_mouse_in_area(x, y)
-            if in_area:
+            if self.is_mouse_in_area(x, y):
                 self.is_checked = not self.is_checked
                 set_func(self.is_checked)       
 
-    def render(self, screen: pygame.Surface, x_y, answer):
-        self._set_coordinate_value(x_y)
-        if answer:
-            color = self.true_color
-            self.current_button_pos = (self.button_right_x, self.button_right_y)
+    def render(self, screen: pygame.Surface, x_y, lock_status):
+        if lock_status:
+            img_path = self.true_toggle_path
             self.is_checked = True
         else:
-            color = self.false_color
-            self.current_button_pos = (self.button_left_x, self.button_left_y)
+            img_path = self.false_toggle_path
             self.is_checked = False
-
-        # Ellipse
-        rect = pygame.rect.Rect(self.x, self.y, self.width, self.height)
-        pygame.draw.ellipse(screen, self.color, rect)
-        rect = pygame.rect.Rect(self.x + 2, self.y + 2, self.width - 4, self.height - 4)
-        pygame.draw.ellipse(screen, color, rect)
-        # Toggle
-        pygame.draw.circle(screen, self.border_color, self.current_button_pos, self.button_r)
-        pygame.draw.circle(screen, self.color, self.current_button_pos, self.button_r - 2)
+        
+        img_surf = pygame.image.load(img_path)
+        self.iwidth = img_surf.get_width() * self.scale
+        self.iheight = img_surf.get_height() * self.scale
+        img_surf = pygame.transform.scale(img_surf, (self.iwidth, self.iheight))
+        
+        self.x, self.y = x_y
+        screen.blit(img_surf, x_y)
 
 

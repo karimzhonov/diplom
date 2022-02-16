@@ -1,3 +1,4 @@
+import os
 import cv2
 import pygame
 import numpy as np
@@ -13,12 +14,13 @@ class App:
     door_control_text = 'Door control'
     t0 = None
     
-    def __init__(self, title: str = 'Lock', display_shape=(400, 600), frame_shape=(400, 300),
-                 background_color=(0, 0, 0), color=(255, 255, 255)):
+    def __init__(self, title: str = 'Lock', display_shape=(400, 550), frame_shape=(400, 300),
+                 background_color=(255, 255, 255), color=(0, 0, 0), background_img_path = None):
         self.dwidth, self.dheight = display_shape
         self.fwidth, self.fheight = frame_shape
         self.background_color = background_color
         self.color = color
+        self.background_img_path = background_img_path
 
         self.led = Led()
         self.lock_control = LockControl()
@@ -27,7 +29,7 @@ class App:
         pygame.init()
         pygame.font.init()
         pygame.display.set_caption(title)
-        self.font = pygame.font.SysFont('arial', 18)
+        self.font = pygame.font.SysFont('serif', 18)
         self.screen = pygame.display.set_mode((self.dwidth, self.dheight))
         self.screen.fill(self.background_color)
 
@@ -52,13 +54,19 @@ class App:
             frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
             img_surf = pygame.surfarray.make_surface(frame).convert_alpha()
-            img_surf = pygame.transform.scale(img_surf, (self.fwidth, self.fheight))
+            img_surf = pygame.transform.scale(img_surf, (self.fwidth - 10, self.fheight - 10))
             return img_surf
         except cv2.error:
             return None
 
     def render(self, img_surf):
         x, y = 0, 0
+        if self.background_img_path:
+            if os.path.exists(self.background_img_path):
+                background_surf = pygame.image.load(self.background_img_path)
+                background_surf = pygame.transform.scale(background_surf, (self.dwidth, self.dheight))
+                self.screen.blit(background_surf, (x, y))
+        x, y = 5, 10
         if not img_surf == None:
             self.screen.blit(img_surf, (x, y))
         # Lock text
@@ -77,12 +85,12 @@ class App:
         x, y = (self.dwidth - 100, y)
         self.led.render(self.screen, (x, y), door_status)
         # Door control text
-        x, y = (self.dwidth/2 - 40, y + 40)
+        x, y = (self.dwidth/2 - 55, y + 40)
         door_lock = self.font.render(self.door_control_text, False, self.color)
         self.screen.blit(door_lock, (x, y))
         # Door control
         door_status = self.lock_control.get_sensor_status()
-        x, y = (self.dwidth/2 - 20, y - 10 + 50)
+        x, y = (self.dwidth/2 - 45, y - 10 + 40)
         self.toggle.render(self.screen, (x, y), door_status)
         
         pygame.display.flip()

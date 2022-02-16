@@ -67,7 +67,7 @@ class Client:
     def run_frame_socket(self) -> None:
         s = get_client_socket(self.port_frame, self.port_server_frame)
         if s:
-            app = App()
+            app = App(title=f'Lock: {self.port}')
             video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             while True:
                 try:
