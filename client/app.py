@@ -1,7 +1,6 @@
 import cv2
 import pygame
 import numpy as np
-
 from time import time
 from lock_control import LockControl
 from config import OPENED_DELAY

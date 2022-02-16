@@ -49,25 +49,18 @@ class Client:
 
     def run(self) -> None:
         set_running_status(True)
-        while True:
-            try:
-                if not get_running_status():
-                    break
-                sleep(1)
-                s = get_client_socket(self.port, PORT)
-                if s:
-                    sleep(0.5)
-                    task1 = Thread(target=self.run_frame_socket)
-                    task1.start()
-                    sleep(3)
-                    task2 = Thread(target=self.run_auth_socket)
-                    task2.start()
-                    sleep(1)
-                    task1.join()
-                    task2.join()
-                    s.close()
-            except OSError:
-                continue
+        s = get_client_socket(self.port, PORT)
+        if s:
+            task1 = Thread(target=self.run_frame_socket)
+            task1.start()
+            sleep(3)
+            task2 = Thread(target=self.run_auth_socket)
+            task2.start()
+            sleep(1)
+            task1.join()
+            task2.join()
+            s.close()
+            
         pygame.quit()
         sys.exit()
 

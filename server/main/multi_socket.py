@@ -2,7 +2,6 @@ import pickle
 import socket
 from threading import Thread
 
-from server.settings import BASE_DIR
 from .models import Lock
 
 
@@ -10,7 +9,6 @@ HOST = 'localhost'
 
 
 def get_server_socket(port) -> socket.socket:
-    
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, port))
     s.listen(10)
@@ -30,7 +28,7 @@ class Session:
         try:
             s = get_server_socket(self.port_auth)
             connection, address = s.accept()
-            lock = Lock.init(self.port)
+            lock = Lock.objects.get_or_create(port=self.port)[0]
             auth = Authentication(lock, connection)
             auth.run(self, s)
             print(f'Port closed: {self.port_auth}')
@@ -44,7 +42,7 @@ class Session:
         try:
             s = get_server_socket(self.port_frame)
             connection, address = s.accept()
-            lock = Lock.init(self.port)
+            lock = Lock.objects.get_or_create(port=self.port)[0]
             frame = Frame(lock, connection)
             frame.run(self, s)
             print(f'Port closed: {self.port_frame}')
@@ -60,6 +58,8 @@ class Session:
 
 
 class MultiSocket:
+    from server.settings import BASE_DIR
+
     PORT = 5000
     filename = f'{BASE_DIR}/tmp/start.pickle'
 

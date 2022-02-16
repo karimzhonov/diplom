@@ -1,4 +1,3 @@
-import face_recognition as fr
 from datetime import datetime
 from django.db import models
 from server import settings
@@ -42,6 +41,8 @@ class Profile(models.Model):
 
     @classmethod
     def get_profiles_encs(cls) -> tuple:
+        import face_recognition as fr
+        
         profiles = cls.objects.filter(is_active=True)
         data = []
         profiles_list = []
@@ -56,7 +57,7 @@ class Profile(models.Model):
 
 class Lock(models.Model):
     port = models.IntegerField(verbose_name='Порт соединение', unique=True)
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, blank=True, verbose_name='Разрешено')
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, blank=True, verbose_name='Разрешено', default=1)
     bio = models.TextField(blank=True, verbose_name='Дополнительные данные')
 
     class Meta:
@@ -66,15 +67,6 @@ class Lock(models.Model):
 
     def __str__(self) -> str:
         return f'{self.port}'
-
-    @classmethod
-    def init(cls, port):
-        locks = cls.objects.filter(port=port)
-        if not len(locks):
-            lock = cls.objects.create(port=port, permission_id=1)
-        else:
-            lock = locks[0]
-        return lock
 
     def get_last_frame_path(self):
         return f'{settings.BASE_DIR}/tmp/{self.port}_frame.png'

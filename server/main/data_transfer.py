@@ -1,15 +1,12 @@
 import os
 import cv2
-import sys
 import pickle
 import numpy as np
-import face_recognition as fr
 
 from threading import Thread
 from socket import socket
 from server import settings
 from .models import Lock, Activity, Profile
-from .multi_socket import MultiSocket
 
 
 class Client:
@@ -49,6 +46,7 @@ class Client:
 
 
 class Authentication(Client):
+
     @staticmethod
     def check_distance(frame: np.array) -> int:
         from mediapipe.python.solutions.face_mesh import FaceMesh
@@ -94,6 +92,8 @@ class Authentication(Client):
 
     @staticmethod
     def compare_face(frame: np.array) -> tuple:
+        import face_recognition as fr
+
         status = 0
         profile = []
         true_face_encs, profiles = Profile.get_profiles_encs()
