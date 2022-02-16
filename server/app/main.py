@@ -1,3 +1,4 @@
+import os
 import sys
 import pygame
 
@@ -28,11 +29,13 @@ class App:
             if event.type == pygame.QUIT:
                 MultiSocket.set_status(False)
                 pygame.quit()
+                os.system('exit')
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     MultiSocket.set_status(False)
                     pygame.quit()
+                    os.system('exit')
                     sys.exit()
 
     def set_lock_frame(self, lock: Lock, x_y: tuple):

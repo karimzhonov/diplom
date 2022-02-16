@@ -6,6 +6,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
+            MultiSocket.set_status(True)
             MultiSocket().run()
         except OSError:
             pass

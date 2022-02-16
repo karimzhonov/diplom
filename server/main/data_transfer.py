@@ -1,5 +1,6 @@
 import os
 import cv2
+import sys
 import pickle
 import numpy as np
 import face_recognition as fr
@@ -19,24 +20,32 @@ class Client:
     def main(self):
         pass
 
-    def run(self, session):
+    def run(self, session, s):
         while True:
             try:
                 if not session.status:
                     self.conn.close()
                     break
-                if not MultiSocket.get_status():
-                    self.conn.close()
-                    break
+                
                 self.main()
             except cv2.error:
                 continue
             except ConnectionResetError:
+                s.close()
                 self.conn.close()
+                session.status = False
                 break
             except EOFError:
+                continue
+            except ConnectionAbortedError:
+                s.close()
+                self.conn.close()
+                session.status = False
                 break
-        self.conn.close()
+        self.conn.close() 
+        s.close() 
+        session.status = False
+
 
 
 class Authentication(Client):
