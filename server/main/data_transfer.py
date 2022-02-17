@@ -27,13 +27,16 @@ class Client:
                 self.main()
             except cv2.error:
                 continue
+            except EOFError:
+                s.close()
+                self.conn.close
+                session.status = False
+                break
             except ConnectionResetError:
                 s.close()
                 self.conn.close()
                 session.status = False
                 break
-            except EOFError:
-                continue
             except ConnectionAbortedError:
                 s.close()
                 self.conn.close()
@@ -46,6 +49,19 @@ class Client:
 
 
 class Authentication(Client):
+    def save_auth(self, status):
+        try:
+            with open(self.lock.get_last_auth_path(), 'wb') as file:
+                pickle.dump(status, file)
+        except EOFError:
+            self.save_auth(status)
+
+    def get_auth(self):
+        try:
+            with open(self.lock.get_last_auth_path(), 'rb') as file:
+                return pickle.load(file)
+        except EOFError:
+            return self.get_auth()
 
     @staticmethod
     def check_distance(frame: np.array) -> int:
@@ -134,17 +150,26 @@ class Authentication(Client):
 
         if status:
             Thread(target=Activity.add_activity, args=(profiles, self.lock)).start()
-
-        return status
+        self.save_auth(status)
 
     def main(self) -> None:
         self.conn.recv(4096)
         if not os.path.exists(self.lock.get_last_frame_path()):
+            answer = pickle.dumps(0)
+            self.conn.send(answer)
             return
         frame = cv2.imread(self.lock.get_last_frame_path(), cv2.IMREAD_ANYCOLOR)
-        answer = self.auth(frame)
+        save_task = Thread(target=self.auth, args=(frame,))
+        save_task.start()
+
+        if not os.path.exists(self.lock.get_last_auth_path()):
+            answer = pickle.dumps(0)
+            self.conn.send(answer)
+            return
+        answer = self.get_auth()
         answer = pickle.dumps(answer)
         self.conn.send(answer)
+        save_task.join()
 
 
 class Frame(Client):
@@ -164,9 +189,12 @@ class Frame(Client):
         cv2.imwrite(frame_path, frame)
 
     def main(self) -> None:
-        frame = self.get_frame()
+        try:
+            frame = self.get_frame()
 
-        Thread(target=self.save_frame, args=(frame,)).start()
+            Thread(target=self.save_frame, args=(frame,)).start()
 
-        answer = pickle.dumps(b'ok')
-        self.conn.send(answer)
+            answer = pickle.dumps(b'ok')
+            self.conn.send(answer)
+        except OSError:
+            self.conn.close()

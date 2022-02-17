@@ -1,8 +1,7 @@
 import pickle
 import pygame
 
-from config import RUNNONG_PATH
-
+from server.settings import BASE_DIR
 
 def set_pickle(path, value):
     try:
@@ -18,37 +17,12 @@ def get_pickle(path):
             return pickle.load(file)
     except EOFError:
         return get_pickle(path)
-
-
-def set_running_status(status):
-    set_pickle(RUNNONG_PATH, status)
-
-def get_running_status():
-    return get_pickle(RUNNONG_PATH)
-
-
-class Led:
-    true_led_path = 'assets/led_on.png'
-    false_led_path = 'assets/led_off.png'
-    def __init__(self, raduis=18) -> None:
-        self.radius = raduis
-
-    def render(self, screen: pygame.Surface, x_y, status: bool):
-        if status:
-            path = self.true_led_path
-        else:
-            path = self.false_led_path
-        
-        img_surf = pygame.image.load(path)
-        img_surf = pygame.transform.scale(img_surf, (self.radius * 2, self.radius * 2))
-        x, y = x_y
-        x -= self.radius
-        y -= self.radius
-        screen.blit(img_surf, (x, y))
+    except FileNotFoundError:
+        set_pickle(path, 0)
 
 class Toggle:
-    true_toggle_path = 'assets/toggle_on.png'
-    false_toggle_path = 'assets/toggle_off.png'
+    true_toggle_path = f'{BASE_DIR}/app/assets/toggle_on.png'
+    false_toggle_path = f'{BASE_DIR}/app/assets/toggle_off.png'
     def __init__(self, scale=0.4) -> None:
         self.scale = scale
         self.is_checked = None
@@ -73,5 +47,3 @@ class Toggle:
         
         self.x, self.y = x_y
         screen.blit(img_surf, x_y)
-
-

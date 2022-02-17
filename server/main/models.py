@@ -70,6 +70,9 @@ class Lock(models.Model):
 
     def get_last_frame_path(self):
         return f'{settings.BASE_DIR}/tmp/{self.port}_frame.png'
+    
+    def get_last_auth_path(self):
+        return f'{settings.BASE_DIR}/tmp/{self.port}_auth.pickle'
 
 
 class Activity(models.Model):

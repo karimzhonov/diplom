@@ -76,22 +76,7 @@ class Client:
                         break
                     
                     # App
-                    app.answer = app.lock_control.get_lock_status()
-                    if app.answer:
-                        app.t0 = time()
-                        # 5 second waiting
-                        while time() - app.t0 < OPENED_DELAY:
-                            frame = self.send_frame(s, video)
-                            app.main_run(frame, [app.door_open_event])
-
-                            # if door opened, waiting close the door
-                            while app.lock_control.get_sensor_status():
-                                frame = self.send_frame(s, video)
-                                app.main_run(frame, [app.door_open_event])                                
-                            
-                    else:
-                        frame = self.send_frame(s, video)
-                        app.main_run(frame)
+                    app.view(self.send_frame, s=s, cap=video)
 
                 except ConnectionAbortedError:
                     set_running_status(False)
