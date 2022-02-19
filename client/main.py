@@ -31,21 +31,14 @@ class Client:
         self.port_auth = port*10 + 3
 
     def send_frame(self, s: socket.socket, cap: cv2.VideoCapture) -> None:
-        try:
-            _, frame = cap.read()
-            for point in frame:
-                point = pickle.dumps(point)
-                s.send(point)
-                s.recv(4096)
-            s.send(b'stop')
+        _, frame = cap.read()
+        for point in frame:
+            point = pickle.dumps(point)
+            s.send(point)
             s.recv(4096)
-            return frame
-        except ConnectionAbortedError:
-            self.status = False
-            s.close()
-        except ConnectionResetError:
-            self.status = False
-            s.close()
+        s.send(b'stop')
+        s.recv(4096)
+        return frame
 
     def run(self) -> None:
         set_running_status(True)
@@ -72,20 +65,25 @@ class Client:
             while True:
                 try:
                     if not get_running_status():
-                        s.close()
                         break
                     
                     # App
-                    app.view(self.send_frame, s=s, cap=video)
-
+                    app.events_list = []
+                    answer = app.lock_control.get_lock_status()
+                    if answer:
+                        # if door opened, waiting close the door
+                        while app.lock_control.get_sensor_status():
+                            frame = self.send_frame(s, video)
+                            app.view(frame, answer)
+                        
+                    frame = self.send_frame(s, video)
+                    app.view(frame, answer)
+                except ConnectionResetError:
+                    break
                 except ConnectionAbortedError:
-                    set_running_status(False)
-                    s.close()
                     break
-                except OSError:
-                    set_running_status(False)
-                    s.close
-                    break
+    
+            set_running_status(False)
             s.close()
     
     def run_auth_socket(self) -> None:
@@ -95,21 +93,18 @@ class Client:
             while True:
                 try:
                     if not get_running_status():
-                        s.close()
                         break
 
                     s.send(b'Get')
                     answer = s.recv(4096)
                     answer = pickle.loads(answer)
                     lc.set_lock_status(answer)
+                except ConnectionResetError:
+                    break
                 except ConnectionAbortedError:
-                    set_running_status(False)
-                    s.close()
                     break
-                except OSError:
-                    set_running_status(False)
-                    s.close()
-                    break
+            set_running_status(False)
+            s.close()
 
 
 if __name__ == '__main__':

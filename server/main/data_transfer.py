@@ -1,4 +1,4 @@
-import os
+from time import time
 import cv2
 import pickle
 import numpy as np
@@ -7,6 +7,7 @@ from threading import Thread
 from socket import socket
 from server import settings
 from .models import Lock, Activity, Profile
+from .multi_socket import MultiSocket
 
 
 class Client:
@@ -20,32 +21,26 @@ class Client:
     def run(self, session, s):
         while True:
             try:
-                if not session.status:
-                    self.conn.close()
+                if not session.status or not MultiSocket.get_status():
                     break
-                
+
                 self.main()
             except cv2.error:
                 continue
             except EOFError:
-                s.close()
-                self.conn.close
-                session.status = False
                 break
             except ConnectionResetError:
-                s.close()
-                self.conn.close()
-                session.status = False
                 break
             except ConnectionAbortedError:
-                s.close()
-                self.conn.close()
-                session.status = False
                 break
-        self.conn.close() 
-        s.close() 
+        try:
+            self.video_writer.release()
+        except AttributeError:
+            pass
+        self.conn.close()
+        s.close()
         session.status = False
-
+        MultiSocket.set_status(False)
 
 
 class Authentication(Client):
@@ -62,6 +57,9 @@ class Authentication(Client):
                 return pickle.load(file)
         except EOFError:
             return self.get_auth()
+        except FileNotFoundError:
+            self.save_auth((0, 0))
+            return 0, 0
 
     @staticmethod
     def check_distance(frame: np.array) -> int:
@@ -138,7 +136,7 @@ class Authentication(Client):
                 status = 1
         return status
 
-    def auth(self, frame: np.array) -> int:
+    def auth(self, frame: np.array):
         profiles = None
         status = self.check_distance(frame)
 
@@ -150,29 +148,35 @@ class Authentication(Client):
 
         if status:
             Thread(target=Activity.add_activity, args=(profiles, self.lock)).start()
-        self.save_auth(status)
+        _, app_status = self.get_auth()
+        self.save_auth((status, app_status))
 
     def main(self) -> None:
-        self.conn.recv(4096)
-        if not os.path.exists(self.lock.get_last_frame_path()):
-            answer = pickle.dumps(0)
+        status, app_control = self.get_auth()
+        if status or app_control:
+            t0 = time()
+            while time() - t0 < 5:
+                self.conn.recv(4096)
+                answer = pickle.dumps(1)
+                self.conn.send(answer)
+            self.save_auth((0, 0))
+        else:
+            self.conn.recv(4096)
+            answer = pickle.dumps(status)
             self.conn.send(answer)
-            return
-        frame = cv2.imread(self.lock.get_last_frame_path(), cv2.IMREAD_ANYCOLOR)
-        save_task = Thread(target=self.auth, args=(frame,))
-        save_task.start()
 
-        if not os.path.exists(self.lock.get_last_auth_path()):
-            answer = pickle.dumps(0)
-            self.conn.send(answer)
-            return
-        answer = self.get_auth()
-        answer = pickle.dumps(answer)
-        self.conn.send(answer)
-        save_task.join()
+            frame = cv2.imread(self.lock.get_last_frame_path(), cv2.IMREAD_ANYCOLOR)
+            self.auth(frame)
 
 
 class Frame(Client):
+    def __init__(self, lock, conn):
+        super().__init__(lock, conn)
+        self.frame_size = (480, 640)
+        print(self.lock.get_last_video_path())
+        self.video_writer = cv2.VideoWriter(self.lock.get_last_video_path(),
+                                            cv2.VideoWriter_fourcc(*'MJPG'), 5, self.frame_size)
+
     def get_frame(self) -> np.array:
         data = []
         while True:
@@ -189,12 +193,10 @@ class Frame(Client):
         cv2.imwrite(frame_path, frame)
 
     def main(self) -> None:
-        try:
-            frame = self.get_frame()
+        frame = self.get_frame()
+        self.save_frame(frame)
+        frame = cv2.resize(frame, self.frame_size).astype('uint8')
+        self.video_writer.write(frame)
 
-            Thread(target=self.save_frame, args=(frame,)).start()
-
-            answer = pickle.dumps(b'ok')
-            self.conn.send(answer)
-        except OSError:
-            self.conn.close()
+        answer = pickle.dumps(b'ok')
+        self.conn.send(answer)

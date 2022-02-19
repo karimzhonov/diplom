@@ -1,3 +1,4 @@
+import os.path
 from datetime import datetime
 from django.db import models
 from server import settings
@@ -73,6 +74,15 @@ class Lock(models.Model):
     
     def get_last_auth_path(self):
         return f'{settings.BASE_DIR}/tmp/{self.port}_auth.pickle'
+    
+    def get_last_video_path(self):
+        path = f'{settings.BASE_DIR}/media/videos/{self.port}'
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        date_time = '.'.join('___'.join(str(datetime.now()).split('.')[0].split(' ')).split(':'))
+        return f'{path}/{date_time}.avi'
+    
 
 
 class Activity(models.Model):

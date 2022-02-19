@@ -18,6 +18,9 @@ def get_pickle(path):
             return pickle.load(file)
     except EOFError:
         return get_pickle(path)
+    except FileNotFoundError:
+        set_pickle(path, 0)
+        return 0
 
 
 def set_running_status(status):

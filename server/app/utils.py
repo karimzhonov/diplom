@@ -18,7 +18,8 @@ def get_pickle(path):
     except EOFError:
         return get_pickle(path)
     except FileNotFoundError:
-        set_pickle(path, 0)
+        set_pickle(path, (0, 0))
+        return 0, 0
 
 class Toggle:
     true_toggle_path = f'{BASE_DIR}/app/assets/toggle_on.png'
@@ -26,8 +27,13 @@ class Toggle:
     def __init__(self, scale=0.4) -> None:
         self.scale = scale
         self.is_checked = None
+        self.iwidth = None
+        self.iheight = None
+        self.x = None
+        self.y = None
 
-    def on_click_event(self, event, callback):
+    @staticmethod
+    def on_click_event(event, callback):
         if event.type == pygame.MOUSEBUTTONDOWN:
             callback(event)
             

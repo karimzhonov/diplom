@@ -110,31 +110,8 @@ class App:
 
         pygame.display.flip()
 
-    def view(self, getter_frame_func, *args, **kwargs):
-        self.events_list = []
-        answer = self.lock_control.get_lock_status()
-        if answer:
-            self.t0 = time()
-            # 5 second waiting
-            while time() - self.t0 < OPENED_DELAY:
-                frame = getter_frame_func(*args, **kwargs)
-
-                img_surf = self.frame_to_surf(frame)
-                self.render(img_surf, answer)
-                self.run_events()
-
-                # if door opened, waiting close the door
-                while self.lock_control.get_sensor_status():
-                    frame = getter_frame_func(*args, **kwargs)
-
-                    img_surf = self.frame_to_surf(frame)
-                    self.render(img_surf, answer)
-                    self.run_events()                                
-                           
-        else:
-            frame = getter_frame_func(*args, **kwargs)
-
-            img_surf = self.frame_to_surf(frame)
-            self.render(img_surf, answer)
-            self.run_events()
+    def view(self, frame, answer):
+        img_surf = self.frame_to_surf(frame)
+        self.render(img_surf, answer)
+        self.run_events()
 

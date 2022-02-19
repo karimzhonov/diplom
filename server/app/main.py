@@ -6,9 +6,11 @@ from main.models import Lock
 from main.multi_socket import MultiSocket
 from .utils import Toggle, set_pickle, get_pickle, BASE_DIR
 
+
 class App:
     def __init__(self, title: str = 'Camera surveillance', display_shape=(1000, 600), frame_shape=(200, 150),
-                 background_color=(255, 255, 255), color=(0, 0, 0), icon_path = f'{BASE_DIR}/app/assets/kk.ico', font='serif', font_size=18):
+                 background_color=(255, 255, 255), color=(0, 0, 0), icon_path=f'{BASE_DIR}/app/assets/kk.ico',
+                 font='serif', font_size=18):
         self.dwidth, self.dheight = display_shape
         self.fwidth, self.fheight = frame_shape
         self.background_color = background_color
@@ -26,8 +28,8 @@ class App:
         self.screen = pygame.display.set_mode((self.dwidth, self.dheight))
         self.screen.fill(self.background_color)
 
-    def add_event_lisner(self, lisner,*args, **kwargs):
-        self.events_list.append((lisner, args, kwargs))        
+    def add_event_lisner(self, lisner, *args, **kwargs):
+        self.events_list.append((lisner, args, kwargs))
 
     def run_events(self):
         for event in pygame.event.get():
@@ -52,7 +54,7 @@ class App:
             img = pygame.transform.scale(img, (self.fwidth, self.fheight))
             self.screen.blit(img, x_y)
         except FileNotFoundError:
-            self.set_lock_frame(lock, x_y)
+            pass
 
     def set_lock_text(self, lock: Lock, x_y: tuple):
         x, y = x_y
@@ -63,15 +65,15 @@ class App:
         x, y = x_y
         x = x + self.fwidth - 100
         y = y + self.fheight + 10
-        lock_status = get_pickle(lock.get_last_auth_path())
-        self.toggle.render(self.screen, (x, y), lock_status)
+        status, app_control_status = get_pickle(lock.get_last_auth_path())
+        self.toggle.render(self.screen, (x, y), status or app_control_status)
 
-        def toggle_callback(event, tx_ty=(x, y), tw_th=(self.toggle.iwidth, self.toggle.iheight), lock_status=lock_status):
+        def toggle_callback(event, tx_ty=(x, y), tw_th=(self.toggle.iwidth, self.toggle.iheight)):
             x, y = event.pos
             tx, ty = tx_ty
             w, h = tw_th
             if tx <= x <= tx + w and ty <= y <= ty + h:
-                set_pickle(lock.get_last_auth_path(), not lock_status)
+                set_pickle(lock.get_last_auth_path(), (status, 1))
 
         self.add_event_lisner(self.toggle.on_click_event, callback=toggle_callback)
 
@@ -100,7 +102,5 @@ class App:
 
                 pygame.display.flip()
                 self.run_events()
-            # except FileNotFoundError:
-            #     continue
             except pygame.error:
                 continue
