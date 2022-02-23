@@ -8,17 +8,21 @@ from socket import socket
 from server import settings
 from .models import Lock, Activity, Profile
 from .multi_socket import MultiSocket
+from .utils import get_pickle, set_pickle
 
 
 class Client:
-    def __init__(self, lock: Lock, conn: socket):
+    def __init__(self, lock: Lock, conn: socket = None):
         self.lock = lock
         self.conn = conn
 
     def main(self):
         pass
 
-    def run(self, session, s):
+    def _out_while_errors(self):
+        pass
+
+    def run(self, session):
         while True:
             try:
                 if not session.status or not MultiSocket.get_status():
@@ -27,36 +31,31 @@ class Client:
                 self.main()
             except cv2.error:
                 continue
-            except EOFError:
-                break
             except ConnectionResetError:
                 break
             except ConnectionAbortedError:
                 break
+            except EOFError:
+                break
         try:
-            self.video_writer.release()
+            self._out_while_errors()
         except AttributeError:
             pass
         self.conn.close()
-        s.close()
         session.status = False
-        MultiSocket.set_status(False)
+        MultiSocket.remove_active_ports(self.lock.port)
 
 
 class Authentication(Client):
+    def _out_while_errors(self):
+        self.save_auth((0, 0))
+
     def save_auth(self, status):
-        try:
-            with open(self.lock.get_last_auth_path(), 'wb') as file:
-                pickle.dump(status, file)
-        except EOFError:
-            self.save_auth(status)
+        set_pickle(self.lock.get_last_auth_path(), status)
 
     def get_auth(self):
         try:
-            with open(self.lock.get_last_auth_path(), 'rb') as file:
-                return pickle.load(file)
-        except EOFError:
-            return self.get_auth()
+            return get_pickle(self.lock.get_last_auth_path())
         except FileNotFoundError:
             self.save_auth((0, 0))
             return 0, 0
@@ -176,6 +175,9 @@ class Frame(Client):
         print(self.lock.get_last_video_path())
         self.video_writer = cv2.VideoWriter(self.lock.get_last_video_path(),
                                             cv2.VideoWriter_fourcc(*'MJPG'), 5, self.frame_size)
+
+    def _out_while_errors(self):
+        self.video_writer.release()
 
     def get_frame(self) -> np.array:
         data = []

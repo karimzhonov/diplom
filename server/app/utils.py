@@ -1,25 +1,6 @@
-import pickle
 import pygame
 
 from server.settings import BASE_DIR
-
-def set_pickle(path, value):
-    try:
-        with open(path, 'wb') as file:
-            pickle.dump(value, file)
-    except EOFError:
-        set_pickle(path, value)
-
-
-def get_pickle(path):
-    try:
-        with open(path, 'rb') as file:
-            return pickle.load(file)
-    except EOFError:
-        return get_pickle(path)
-    except FileNotFoundError:
-        set_pickle(path, (0, 0))
-        return 0, 0
 
 class Toggle:
     true_toggle_path = f'{BASE_DIR}/app/assets/toggle_on.png'

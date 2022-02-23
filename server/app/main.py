@@ -1,10 +1,13 @@
 import os
 import sys
+
+import numpy as np
 import pygame
 
 from main.models import Lock
 from main.multi_socket import MultiSocket
-from .utils import Toggle, set_pickle, get_pickle, BASE_DIR
+from main.data_transfer import Authentication
+from .utils import Toggle, BASE_DIR
 
 
 class App:
@@ -48,9 +51,21 @@ class App:
                 for lisner, args, kwargs in self.events_list:
                     lisner(event, *args, **kwargs)
 
+    def get_not_connection_surface(self):
+        img = np.full((self.fheight, self.fwidth, 3), (0, 0, 0), np.uint8)
+        x, y = 20, self.fheight // 2 - 10
+        surface = pygame.surfarray.make_surface(img).convert_alpha()
+        text = self.font.render('Not Connection', False, self.background_color)
+        surface.blit(text, (x, y))
+        return surface
+
+
     def set_lock_frame(self, lock: Lock, x_y: tuple):
         try:
-            img = pygame.image.load(lock.get_last_frame_path()).convert_alpha()
+            if lock.port in MultiSocket.get_active_ports():
+                img = pygame.image.load(lock.get_last_frame_path()).convert_alpha()
+            else:
+                img = self.get_not_connection_surface()
             img = pygame.transform.scale(img, (self.fwidth, self.fheight))
             self.screen.blit(img, x_y)
         except FileNotFoundError:
@@ -65,7 +80,7 @@ class App:
         x, y = x_y
         x = x + self.fwidth - 100
         y = y + self.fheight + 10
-        status, app_control_status = get_pickle(lock.get_last_auth_path())
+        status, app_control_status = Authentication(lock).get_auth()
         self.toggle.render(self.screen, (x, y), status or app_control_status)
 
         def toggle_callback(event, tx_ty=(x, y), tw_th=(self.toggle.iwidth, self.toggle.iheight)):
@@ -73,7 +88,7 @@ class App:
             tx, ty = tx_ty
             w, h = tw_th
             if tx <= x <= tx + w and ty <= y <= ty + h:
-                set_pickle(lock.get_last_auth_path(), (status, 1))
+                Authentication(lock).save_auth((status, 1))
 
         self.add_event_lisner(self.toggle.on_click_event, callback=toggle_callback)
 

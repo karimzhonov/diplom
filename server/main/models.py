@@ -1,4 +1,4 @@
-import os.path
+import os
 from datetime import datetime
 from django.db import models
 from server import settings
@@ -23,7 +23,7 @@ class Profile(models.Model):
     bio = models.TextField(blank=True, verbose_name='Дополнительные данные')
     img = models.ImageField(upload_to='profiles/', blank=True, verbose_name='Фото')
     permissions = models.ManyToManyField(Permission, verbose_name='Разрешено')
-    is_active = models.BooleanField(default=True, verbose_name='Астивный пользователь')
+    is_active = models.BooleanField(default=True, verbose_name='Активный пользователь')
 
     class Meta:
         verbose_name = 'Пользователь'
