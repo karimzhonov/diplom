@@ -1,6 +1,7 @@
 import pygame
 
 from server.settings import BASE_DIR
+from main.utils import set_pickle, get_pickle
 
 class Toggle:
     true_toggle_path = f'{BASE_DIR}/app/assets/toggle_on.png'
@@ -34,3 +35,16 @@ class Toggle:
         
         self.x, self.y = x_y
         screen.blit(img_surf, x_y)
+
+
+def set_emergency_control_status(status):
+    path = f'{BASE_DIR}/tmp/emergency_control_status.pickle'
+    set_pickle(path, status)
+
+def get_emergency_control_status():
+    path = f'{BASE_DIR}/tmp/emergency_control_status.pickle'
+    try:
+        return get_pickle(path)
+    except FileNotFoundError:
+        set_emergency_control_status(False)
+        return False

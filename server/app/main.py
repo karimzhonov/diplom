@@ -7,7 +7,7 @@ import pygame
 from main.models import Lock
 from main.multi_socket import MultiSocket
 from main.data_transfer import Authentication
-from .utils import Toggle, BASE_DIR
+from .utils import Toggle, BASE_DIR, set_emergency_control_status, get_emergency_control_status
 
 
 class App:
@@ -22,6 +22,7 @@ class App:
         self.row_count = int(self.dheight / self.fheight)
         self.toggle = Toggle(scale=0.2)
         self.events_list = []
+        self.emergency_control_status = None
 
         pygame.init()
         pygame.font.init()
@@ -81,7 +82,8 @@ class App:
         x = x + self.fwidth - 100
         y = y + self.fheight + 10
         status, app_control_status = Authentication(lock).get_auth()
-        self.toggle.render(self.screen, (x, y), status or app_control_status)
+
+        self.toggle.render(self.screen, (x, y), status or app_control_status or self.emergency_control_status)
 
         def toggle_callback(event, tx_ty=(x, y), tw_th=(self.toggle.iwidth, self.toggle.iheight)):
             x, y = event.pos
@@ -93,10 +95,31 @@ class App:
         self.add_event_lisner(self.toggle.on_click_event, callback=toggle_callback)
 
     def run(self):
+        set_emergency_control_status(False)
         while True:
             try:
+                # Emergency control text
+                x = self.dwidth - 300
+                y = 10
+                text = self.font.render('Аварийный контроль', False, self.color)
+                self.screen.blit(text, (x, y))
+                x = x + 200
+                # Emergency control togle
+                self.toggle.scale = 0.3
+                self.emergency_control_status = get_emergency_control_status()
+                self.toggle.render(self.screen, (x, y), self.emergency_control_status)
+
+                def toggle_callback(event, tx_ty=(x, y), tw_th=(self.toggle.iwidth, self.toggle.iheight)):
+                    x, y = event.pos
+                    tx, ty = tx_ty
+                    w, h = tw_th
+                    if tx <= x <= tx + w and ty <= y <= ty + h:
+                        set_emergency_control_status(not self.emergency_control_status)
+
+                self.add_event_lisner(self.toggle.on_click_event, callback=toggle_callback)
+
                 x = 0
-                y = 0
+                y = 50
                 counter = 0
                 for lock in Lock.objects.all().order_by('port'):
                     counter += 1

@@ -9,7 +9,7 @@ from server import settings
 from .models import Lock, Activity, Profile
 from .multi_socket import MultiSocket
 from .utils import get_pickle, set_pickle
-
+from app.utils import get_emergency_control_status
 
 class Client:
     def __init__(self, lock: Lock, conn: socket = None):
@@ -152,7 +152,13 @@ class Authentication(Client):
 
     def main(self) -> None:
         status, app_control = self.get_auth()
-        if status or app_control:
+        emergency_control_status = get_emergency_control_status()
+
+        if emergency_control_status:
+            self.conn.recv(4096)
+            answer = pickle.dumps(emergency_control_status)
+            self.conn.send(answer)
+        elif status or app_control:
             t0 = time()
             while time() - t0 < 5:
                 self.conn.recv(4096)

@@ -2,19 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="56c80831-5ac9-40c2-beb0-27c9c65bcf3d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/main/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/tmp/lock_status.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/../client/tmp/lock_status.pickle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/data_transfer.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/data_transfer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/multi_socket.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/multi_socket.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5001_auth.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5001_auth.pickle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5001_frame.png" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5001_frame.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5002_auth.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5002_auth.pickle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/server/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tmp/5002_frame.png" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5002_frame.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5003_auth.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5003_auth.pickle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5003_frame.png" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5003_frame.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +19,13 @@
   </component>
   <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
     <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
     <envs>
@@ -82,7 +85,9 @@
       <workItem from="1644927875082" duration="3742000" />
       <workItem from="1645010851793" duration="7000" />
       <workItem from="1645228299341" duration="8470000" />
-      <workItem from="1645609542460" duration="4997000" />
+      <workItem from="1645609542460" duration="5335000" />
+      <workItem from="1645628372141" duration="16000" />
+      <workItem from="1646341323050" duration="1930000" />
     </task>
     <servers />
   </component>

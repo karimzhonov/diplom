@@ -135,8 +135,4 @@ TEMP_URL = '/tmp/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FOCAL_DEFAULT = 700
-MAX_AUTH_DISTANCE = 100
-EYES_DISTACE_DEFAULT = 6.3
-NOT_AUTHING_TIME = 60
-RUNNING = True
+from server.config import *
