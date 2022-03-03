@@ -160,7 +160,7 @@ class Authentication(Client):
             self.conn.send(answer)
         elif status or app_control:
             t0 = time()
-            while time() - t0 < 5:
+            while time() - t0 < settings.AUTH_DELAY:
                 self.conn.recv(4096)
                 answer = pickle.dumps(1)
                 self.conn.send(answer)

@@ -2,15 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="56c80831-5ac9-40c2-beb0-27c9c65bcf3d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/server/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../client/tmp/lock_status.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/../client/tmp/lock_status.pickle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/data_transfer.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/data_transfer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/server/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp/5002_frame.png" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/5002_frame.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/videos/5002/2022-03-04___00.32.07.avi" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/server/config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,7 +81,7 @@
       <workItem from="1645228299341" duration="8470000" />
       <workItem from="1645609542460" duration="5335000" />
       <workItem from="1645628372141" duration="16000" />
-      <workItem from="1646341323050" duration="1930000" />
+      <workItem from="1646341323050" duration="2290000" />
     </task>
     <servers />
   </component>
