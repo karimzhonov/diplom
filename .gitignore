@@ -1,3 +1,6 @@
+__pycache__
+.idea
+
 server/__pycache__
 server/.idea
 
