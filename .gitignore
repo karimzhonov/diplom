@@ -1,0 +1,5 @@
+server/__pycache__
+server/.idea
+
+client/__pycache__
+client/.idea
