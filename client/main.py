@@ -2,7 +2,7 @@ import sys
 import socket
 import cv2
 import pickle
-from time import sleep, time
+from time import sleep
 from threading import Thread
 
 import pygame
@@ -11,7 +11,10 @@ from app import App
 from utils import set_running_status, get_running_status
 from lock_control import LockControl
 
-def get_client_socket(port_clent: int, port_server: int) -> socket.socket:
+# capture = 'http://admin:admin@192.168.1.28:8081'
+capture = 0
+
+def get_client_socket(port_clent: int, port_server: int) -> socket.socket or None:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((HOST, port_clent))
@@ -30,8 +33,11 @@ class Client:
         self.port_frame = port*10 + 2
         self.port_auth = port*10 + 3
 
-    def send_frame(self, s: socket.socket, cap: cv2.VideoCapture) -> None:
-        _, frame = cap.read()
+    def send_frame(self, s: socket.socket, cap: cv2.VideoCapture):
+        status, frame = cap.read()
+        if frame is None:
+            sleep(1)
+            return self.send_frame(s, cap)
         for point in frame:
             point = pickle.dumps(point)
             s.send(point)
@@ -61,7 +67,10 @@ class Client:
         s = get_client_socket(self.port_frame, self.port_server_frame)
         if s:
             app = App(title=f'Lock: {self.port}')
-            video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            if isinstance(capture, int):
+                video = cv2.VideoCapture(capture, cv2.CAP_DSHOW)
+            else:
+                video = cv2.VideoCapture(capture)
             while True:
                 try:
                     if not get_running_status():
@@ -109,10 +118,9 @@ class Client:
 
 if __name__ == '__main__':
     try:
-        port = int(sys.argv[1])
+        p = int(sys.argv[1])
     except IndexError:
-        port = LOCK_PORT
+        p = LOCK_PORT
     except ValueError:
         raise ValueError('port must be integer')
-    Client(port).run()
-    
+    Client(p).run()

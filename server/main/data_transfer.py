@@ -2,7 +2,7 @@ from time import time
 import cv2
 import pickle
 import numpy as np
-
+import face_recognition as fr
 from threading import Thread
 from socket import socket
 from server import settings
@@ -10,6 +10,7 @@ from .models import Lock, Activity, Profile
 from .multi_socket import MultiSocket
 from .utils import get_pickle, set_pickle
 from app.utils import get_emergency_control_status
+
 
 class Client:
     def __init__(self, lock: Lock, conn: socket = None):
@@ -77,10 +78,9 @@ class Authentication(Client):
         try:
             h, w, _ = frame.shape
             coordinates = []
-
-            detector = FaceMesh(max_num_faces=10)
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            landmarks = detector.process(frame_rgb).multi_face_landmarks
+            landmarks = FaceMesh(max_num_faces=10).process(frame_rgb).multi_face_landmarks
+
             if landmarks:
                 for point in landmarks:
                     left_eye = point.landmark[23]
@@ -103,10 +103,7 @@ class Authentication(Client):
             pass
         return status
 
-    @staticmethod
-    def compare_face(frame: np.array) -> tuple:
-        import face_recognition as fr
-
+    def compare_face(self, frame: np.array) -> tuple:
         status = 0
         profile = []
         true_face_encs, profiles = Profile.get_profiles_encs()
@@ -116,16 +113,42 @@ class Authentication(Client):
 
         face_locs = fr.face_locations(frame)
         face_encs = fr.face_encodings(frame, face_locs)
-
-        for enc in face_encs:
+        profiles_locs = []
+        draw_data = []
+        for enc, locs in zip(face_encs, face_locs):
             flags = fr.compare_faces(true_face_encs, enc)
-
+            data = {
+                'status': False,
+                'profile': None,
+                'locs': locs
+            }
             for i, flag in enumerate(flags):
+
                 if flag:
                     status = 1
                     profile.append(profiles[i])
+                    # draw info
+                    data['status'] = True
+                    data['profile'] = profiles[i]
+                    break
+            draw_data.append(data)
 
+        self.draw_face_locations_and_profiles(draw_data, frame)
         return status, profile
+
+    def draw_face_locations_and_profiles(self, data, frame):
+        for d in data:
+            color = (0, 255, 0) if d['status'] else (0, 0, 255)
+            name = 'Anonim' if not d['status'] else d['profile'].get_full_name()
+            (top, right, bottom, left) = d['locs']
+            # loc
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 3)
+            # Name
+            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), color, cv2.FILLED)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        frame_path = self.lock.get_last_frame_path()
+        cv2.imwrite(frame_path, frame)
 
     @staticmethod
     def check_permission(profiles: list[Profile], lock) -> int:
@@ -135,9 +158,17 @@ class Authentication(Client):
                 status = 1
         return status
 
+    def draw_face_locations(self, frame):
+        face_locs = fr.face_locations(frame)
+        for (top, right, bottom, left) in face_locs:
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        frame_path = self.lock.get_last_frame_path()
+        cv2.imwrite(frame_path, frame)
+
     def auth(self, frame: np.array):
         profiles = None
         status = self.check_distance(frame)
+        self.draw_face_locations(frame)
 
         if status:
             status, profiles = self.compare_face(frame)
@@ -188,7 +219,7 @@ class Frame(Client):
     def get_frame(self) -> np.array:
         data = []
         while True:
-            answer = self.conn.recv(4096)
+            answer = self.conn.recv(1000000)
             if answer == b'stop':
                 break
             answer = pickle.loads(answer)

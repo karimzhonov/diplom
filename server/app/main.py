@@ -101,7 +101,7 @@ class App:
                 # Emergency control text
                 x = self.dwidth - 300
                 y = 10
-                text = self.font.render('Аварийный контроль', False, self.color)
+                text = self.font.render('Аварийный режим', False, self.color)
                 self.screen.blit(text, (x, y))
                 x = x + 200
                 # Emergency control togle

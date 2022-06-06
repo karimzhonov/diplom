@@ -30,6 +30,9 @@ class Profile(models.Model):
         verbose_name_plural = 'Пользователи'
         ordering = ['is_active', 'pk']
 
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
 

@@ -101,6 +101,7 @@ class MultiSocket:
 
     def run(self) -> None:
         s = get_server_socket(self.PORT)
+        self._set_active_ports([])
         print('Server started')
         while True:
             connection, address = s.accept()
